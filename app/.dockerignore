@@ -1,0 +1,7 @@
+.git
+*.md
+*.env
+*.sql
+*.yml
+*.json
+Dockerfile

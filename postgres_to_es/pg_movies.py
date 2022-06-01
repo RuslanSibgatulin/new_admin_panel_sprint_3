@@ -1,5 +1,4 @@
 import psycopg2
-import logging
 from datetime import datetime
 from psycopg2.extensions import connection as pg_connect, STATUS_READY
 from psycopg2.extras import RealDictCursor

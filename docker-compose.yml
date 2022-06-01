@@ -1,0 +1,60 @@
+version: '3'
+
+volumes:
+  static:
+  esdata:
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: pg_movies    
+    env_file:
+      - .env
+    volumes:
+      - ./db-data:/var/lib/postgresql/data/
+
+  backend:
+    container_name: django_movies
+    env_file:
+      - .env
+    build:
+      context: ./app
+    volumes:
+      - static:/usr/src/app/static
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.19.2
+    container_name: nginx_movies    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static:/data/static
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+  elastic:
+    image: elasticsearch:7.7.0
+    container_name: es_movies
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms200m -Xmx200m"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+
+  etl:
+    container_name: etl_movies
+    env_file:
+      - .env
+    build:
+      context: ./postgres_to_es
+    depends_on:
+      - elastic
+      - postgres
+    restart: unless-stopped

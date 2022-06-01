@@ -40,6 +40,7 @@ def etl(
     """Основной процесс порционной выгрузки - загрузки."""
     since = state.get_state('etl_state') or datetime(1, 1, 1)
     start = datetime.utcnow()
+    logger.debug('Get pg_data since %s', since)
     page = pg.modified_movies(since, limit)
     pg_data = next(page, [])
     while pg_data:
@@ -55,14 +56,6 @@ def etl(
 
     # save state
     state.set_state('etl_state', start.isoformat())
-
-
-def get_updated(pg_data):
-    updated = [
-            pg_data[-1][upd_inst]
-            for upd_inst in ('film_upd', 'person_upd', 'film_upd')
-        ]
-    return updated
 
 
 def transform(pg_data):
@@ -83,7 +76,7 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.conf')
     logger = logging.getLogger('ETL')
 
-    load_dotenv()
+    # load_dotenv()
     dsn = {
         "host": os.environ.get("POSTGRES_HOST"),
         "port": os.environ.get("POSTGRES_PORT"),

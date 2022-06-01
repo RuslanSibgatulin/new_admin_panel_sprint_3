@@ -1,5 +1,3 @@
-import logging
-from dataclasses import dataclass
 from elasticsearch7 import Elasticsearch, helpers
 from backoff import backoff
 
