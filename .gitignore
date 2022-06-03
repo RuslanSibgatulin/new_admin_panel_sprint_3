@@ -1,4 +1,3 @@
-*.json
 db-data/
 
 # Byte-compiled / optimized / DLL files
@@ -133,3 +132,4 @@ dmypy.json
 .pyre/
 
 .python-version
+postgres_to_es/state.json

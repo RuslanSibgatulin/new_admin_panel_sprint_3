@@ -1,12 +1,11 @@
 import os
-import logging
 import logging.config
 from time import sleep
 from datetime import datetime
 from dotenv import load_dotenv
 from elasticsearch7 import Elasticsearch
 
-from models import Movie
+from models import Movie, Postgres_dsn
 from json_storage import JsonFileStorage, State
 from es_loader import ElasticsearchMovies
 from pg_movies import PostgresMovies
@@ -20,7 +19,7 @@ def loop(pg: PostgresMovies, es: ElasticsearchMovies):
     logger.info('Start ETL process. Load limit %d', limit)
     while True:
         try:
-            etl(es_movies, pg_movies, state, limit)
+            etl(es, pg, state, limit)
         except KeyboardInterrupt:
             logger.error('Interrupted')
             break
@@ -76,17 +75,8 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.conf')
     logger = logging.getLogger('ETL')
 
-    # load_dotenv()
-    dsn = {
-        "host": os.environ.get("POSTGRES_HOST"),
-        "port": os.environ.get("POSTGRES_PORT"),
-        "user": os.environ.get("POSTGRES_USER"),
-        "password": os.environ.get("POSTGRES_PASSWORD"),
-        "dbname": os.environ.get("POSTGRES_DB"),
-        'options': '-c search_path=content',
-    }
-
-    pg_movies = PostgresMovies(dsn)
+    load_dotenv()
+    pg_movies = PostgresMovies(Postgres_dsn().dict())
     es_movies = ElasticsearchMovies(
         Elasticsearch(os.environ.get("ES_HOST"))
     )

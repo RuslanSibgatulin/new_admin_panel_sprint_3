@@ -1,5 +1,6 @@
+from dataclasses import field
 import uuid
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, BaseSettings, AnyHttpUrl
 
 
 class Person(BaseModel):
@@ -47,3 +48,15 @@ class Movie(BaseModel):
             pers = list(map(
                 lambda x: {'id': x, 'name': v[x]}, v))
         return pers
+
+
+class Postgres_dsn(BaseSettings):
+    host: str = Field(env="POSTGRES_HOST")
+    port: int = Field(env="POSTGRES_PORT")
+    user: str = Field(env="POSTGRES_USER")
+    password: str = Field(env="POSTGRES_PASSWORD")
+    dbname: str = Field(env="POSTGRES_DB")
+    options: str = Field('-c search_path=content')
+
+    class Config:
+        env_file = '.env'

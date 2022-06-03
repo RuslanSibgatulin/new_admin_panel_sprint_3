@@ -11,7 +11,7 @@ class PostgresMovies:
     dsn: dict
     conn: pg_connect = None
 
-    @backoff('PostgresMovies.connect', 0.3)
+    @backoff('PostgresMovies.connect')
     def connect(cls) -> bool:
         if not cls.conn or cls.conn.status != STATUS_READY:
             cls.conn = psycopg2.connect(**cls.dsn)

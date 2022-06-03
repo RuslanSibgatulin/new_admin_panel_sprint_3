@@ -113,13 +113,13 @@ ES_SCHEMA = {
 class ElasticsearchMovies:
     """Класс для ETL процесса выгрузки в Elasticsearch."""
 
-    @backoff('ElasticsearchMovies.init', 0.3)
+    @backoff('ElasticsearchMovies.init')
     def __init__(self, es_connector: Elasticsearch):
         """Создание индекса при инициализации."""
         self.es_conn = es_connector
         self.create_index('movies', ES_SCHEMA)
 
-    @backoff('ElasticsearchMovies.bulk', 0.3)
+    @backoff('ElasticsearchMovies.bulk')
     def bulk(self, bulk_data: list):
         """Массовая загрузка данных в ES"""
         return helpers.bulk(self.es_conn, bulk_data)

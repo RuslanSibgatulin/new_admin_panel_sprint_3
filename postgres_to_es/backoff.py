@@ -1,23 +1,13 @@
 import time
 import logging
+import logging.config
 from random import randrange
 from functools import wraps
 
 
-def retry(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        while True:
-            try:
-                return func(*args, **kwargs)
-            except Exception as err:
-                logger.debug('retry called by error: %s', err)
-                time.sleep(5)
-    return wrapper
-
-
 def backoff(
-    caller: str,
+    _caller: str,
+    _logger: logging.Logger = None,
     start_sleep_time=0.1, factor=2, border_sleep_time=10
 ):
     """
@@ -28,19 +18,26 @@ def backoff(
         t = start_sleep_time * 2^(n) if t < border_sleep_time
         t = border_sleep_time if t >= border_sleep_time
 
+    :param _caller: вызвавшая функция
+    :param _logger: объект логгера
     :param start_sleep_time: начальное время повтора
     :param factor: во сколько раз нужно увеличить время ожидания
     :param border_sleep_time: граничное время ожидания
     :return: результат выполнения функции
     """
 
+    if _logger:
+        log = _logger
+    else:
+        log = logging.getLogger()
+
     def waiting(attempt: int):
         delay = start_sleep_time * pow(factor, attempt)
         if delay > border_sleep_time:
             delay = border_sleep_time
-        logging.debug(
+        log.debug(
             'Attempt %d in <%s>. Retry after %s sec',
-            attempt, caller, delay
+            attempt, _caller, delay
         )
         time.sleep(delay)
 
@@ -53,7 +50,7 @@ def backoff(
                 try:
                     return func(*args, **kwargs)
                 except BaseException as err:
-                    logging.error('%s', err)
+                    log.error('%s', err)
                     waiting(attempt)
                     # if attempt == 10:
                     #     break
@@ -65,10 +62,9 @@ def backoff(
 
 
 logging.config.fileConfig('logging.conf')
-logger = logging.getLogger('back')
 
 
-@backoff('backoff.test', logger, 0.3)
+@backoff('backoff.test')
 def test():  # Decorator test function
     r = randrange(1, 10)
     if r < 2:
@@ -79,4 +75,4 @@ def test():  # Decorator test function
 
 
 if __name__ == '__main__':
-    logger.debug('%s', test())
+    logging.debug('%s', test())
