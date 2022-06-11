@@ -1,7 +1,7 @@
 from elasticsearch7 import Elasticsearch, helpers
 from backoff import backoff
 
-ES_SCHEMA = {
+SETTINGS = {
   "settings": {
     "refresh_interval": "1s",
     "analysis": {
@@ -41,7 +41,9 @@ ES_SCHEMA = {
         }
       }
     }
-  },
+  }
+}
+MOVIES_IDX = {
   "mappings": {
     "dynamic": "strict",
     "properties": {
@@ -108,6 +110,38 @@ ES_SCHEMA = {
     }
   }
 }
+GENRES_IDX = {
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+PERSONS_IDX = {
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+idx_map = {
+  'movies': MOVIES_IDX | SETTINGS,
+  'persons': PERSONS_IDX | SETTINGS,
+  'genres': GENRES_IDX | SETTINGS,
+}
 
 
 class ElasticsearchMovies:
@@ -117,7 +151,8 @@ class ElasticsearchMovies:
     def __init__(self, es_connector: Elasticsearch):
         """Создание индекса при инициализации."""
         self.es_conn = es_connector
-        self.create_index('movies', ES_SCHEMA)
+        for idx, map in idx_map.items():
+            self.create_index(idx, map)
 
     @backoff('ElasticsearchMovies.bulk')
     def bulk(self, bulk_data: list):

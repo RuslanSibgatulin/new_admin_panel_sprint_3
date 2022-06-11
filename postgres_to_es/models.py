@@ -1,9 +1,8 @@
-from dataclasses import field
 import uuid
-from pydantic import BaseModel, Field, validator, BaseSettings, AnyHttpUrl
+from pydantic import BaseModel, Field, validator, BaseSettings
 
 
-class Person(BaseModel):
+class NameMixin(BaseModel):
     id: uuid.UUID
     name: str
 

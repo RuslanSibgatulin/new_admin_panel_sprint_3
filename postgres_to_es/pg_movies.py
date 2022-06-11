@@ -10,6 +10,7 @@ from backoff import backoff
 class PostgresMovies:
     dsn: dict
     conn: pg_connect = None
+    limit: int = 1000
 
     @backoff('PostgresMovies.connect')
     def connect(cls) -> bool:
@@ -18,7 +19,23 @@ class PostgresMovies:
 
         return True
 
-    def modified_movies(cls, since: datetime, limit: int = 100):
+    def get_limited_data(cls, query: str):
+        if cls.connect():
+            with cls.conn.cursor(cursor_factory=RealDictCursor) as cur:
+                offset = 0
+                while True:
+                    limited_query = '{0} LIMIT {1} OFFSET {2}'.format(
+                        query, cls.limit, offset)
+                    cur.execute(limited_query)
+
+                    page = cur.fetchall()
+                    if page:
+                        offset += len(page)
+                        yield list(map(dict, page))
+                    else:
+                        break
+
+    def modified_movies(cls, since: datetime):
         query = """
             SELECT
             fw.id, fw.title, fw.description, fw.rating,
@@ -60,15 +77,24 @@ class PostgresMovies:
                     ON (genre.id = gfw.genre_id)
                 WHERE genre.modified > '{0}'
             )
-            GROUP BY fw.id;
+            GROUP BY fw.id
             """.format(since)
+        yield from cls.get_limited_data(query)
 
-        if cls.connect():
-            with cls.conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(query)
-                while True:
-                    page = cur.fetchmany(limit)
-                    if page:
-                        yield list(map(dict, page))
-                    else:
-                        break
+    def modified_persons(cls, since: datetime):
+        query = """
+            SELECT DISTINCT pfw.person_id "id", person.full_name "name"
+            FROM person_film_work pfw
+            JOIN person ON person.id = pfw.person_id
+            WHERE person.modified > '{0}'
+        """.format(since)
+        yield from cls.get_limited_data(query)
+
+    def modified_genres(cls, since: datetime):
+        query = """
+            SELECT DISTINCT gfw.genre_id "id", genre.name "name"
+            FROM genre_film_work gfw
+            JOIN genre ON genre.id = gfw.genre_id
+            WHERE genre.modified > '{0}'
+        """.format(since)
+        yield from cls.get_limited_data(query)

@@ -5,7 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from elasticsearch7 import Elasticsearch
 
-from models import Movie, Postgres_dsn
+from models import Postgres_dsn, Movie, NameMixin
 from json_storage import JsonFileStorage, State
 from es_loader import ElasticsearchMovies
 from pg_movies import PostgresMovies
@@ -14,12 +14,26 @@ from pg_movies import PostgresMovies
 def loop(pg: PostgresMovies, es: ElasticsearchMovies):
     """Цикл жизни ETL."""
     state = State(JsonFileStorage('state.json'))
-    limit = int(os.environ.get("LIMIT", 1000))
     sync_interval = int(os.environ.get("ETL_INTERVAL", 60))
-    logger.info('Start ETL process. Load limit %d', limit)
+    es_indexes = {
+        'movies': {
+            'getter': pg.modified_movies,
+            'coverter': Movie,
+        },
+        'genres': {
+            'getter': pg.modified_genres,
+            'coverter': NameMixin,
+        },
+        'persons': {
+            'getter': pg.modified_persons,
+            'coverter': NameMixin
+        }
+    }
+
+    logger.info('Start ETL process')
     while True:
         try:
-            etl(es, pg, state, limit)
+            etl(es, es_indexes, state)
         except KeyboardInterrupt:
             logger.error('Interrupted')
             break
@@ -32,38 +46,40 @@ def loop(pg: PostgresMovies, es: ElasticsearchMovies):
 
 def etl(
     es: ElasticsearchMovies,
-    pg: PostgresMovies,
-    state: JsonFileStorage,
-    limit: int
+    es_indexes: dict,
+    state: JsonFileStorage
 ):
     """Основной процесс порционной выгрузки - загрузки."""
-    since = state.get_state('etl_state') or datetime(1, 1, 1)
+
+    since = state.get_state('etl_state') or datetime.min
     start = datetime.utcnow()
-    logger.debug('Get pg_data since %s', since)
-    page = pg.modified_movies(since, limit)
-    pg_data = next(page, [])
-    while pg_data:
-        es_data = transform(pg_data)
-        es.bulk(es_data)
-        logger.debug('Loaded: %s', es_data)
-        logger.info(
-            '%d docs loaded. Total time: %s',
-            len(pg_data),
-            datetime.utcnow() - start
-        )
+    logger.debug('Get data from postgres since %s', since)
+
+    for idx, meta in es_indexes.items():
+        page = meta.get('getter')(since)
         pg_data = next(page, [])
+        while pg_data:
+            es_data = transform(idx, meta.get('coverter'), pg_data)
+            es.bulk(es_data)
+            logger.debug('Loaded: %s', es_data)
+            logger.info(
+                '%d docs loaded. Total time: %s',
+                len(pg_data),
+                datetime.utcnow() - start
+            )
+            pg_data = next(page, [])
 
     # save state
     state.set_state('etl_state', start.isoformat())
 
 
-def transform(pg_data):
+def transform(index_name, _class, pg_data):
     """Преобразование Postgres данных в формат для записи Elasticsearch."""
     es_data = [
             {
-                '_index': 'movies',
+                '_index': index_name,
                 '_id': i['id'],
-                '_source': Movie.parse_obj(i).dict(),
+                '_source': _class.parse_obj(i).dict(),
             }
             for i in pg_data
         ]
@@ -76,7 +92,10 @@ if __name__ == '__main__':
     logger = logging.getLogger('ETL')
 
     load_dotenv()
-    pg_movies = PostgresMovies(Postgres_dsn().dict())
+    pg_movies = PostgresMovies(
+        dsn=Postgres_dsn().dict(),
+        limit=os.environ.get("LIMIT", 500)
+    )
     es_movies = ElasticsearchMovies(
         Elasticsearch(os.environ.get("ES_HOST"))
     )
