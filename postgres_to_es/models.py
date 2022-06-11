@@ -13,8 +13,8 @@ class Movie(BaseModel):
     imdb_rating: float = Field(alias='rating', ge=0, le=10)
     title: str
     description: str
-    genre: list[str]
-    director: list[str]
+    genre: list[dict]  # dict
+    directors: list[dict]  # dict
     actors: list[dict]
     actors_names: list[str]
     writers: list[dict]
@@ -32,15 +32,15 @@ class Movie(BaseModel):
     def set_rating(cls, value):
         return value or 0
 
-    @validator('genre', pre=True)
-    def set_genre(cls, value):
-        return value or ['N/A']
+    # @validator('genre', pre=True)
+    # def set_genre(cls, value):
+    #     return value or ['N/A']
 
-    @validator('actors_names', 'writers_names', 'director', pre=True)
+    @validator('actors_names', 'writers_names', pre=True)
     def names_must_be_list(cls, value):
         return value or []
 
-    @validator('actors', 'writers', pre=True)
+    @validator('actors', 'writers', 'directors', 'genre', pre=True)
     def persons_must_be_list_of_dict(cls, v):
         pers = [{}]
         if isinstance(v, dict):

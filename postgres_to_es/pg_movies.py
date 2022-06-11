@@ -48,9 +48,9 @@ class PostgresMovies:
                 FILTER (WHERE person_film_work.role = 'writer') AS writers,
             array_agg(DISTINCT person.full_name)
                 FILTER (WHERE person_film_work.role='writer') AS writers_names,
-            array_agg(DISTINCT person.full_name)
-                FILTER (WHERE person_film_work.role = 'director') AS director,
-            array_agg(DISTINCT genre.name) AS genre
+            jsonb_object_agg(DISTINCT person.id, person.full_name )
+                FILTER (WHERE person_film_work.role = 'director') AS directors,
+            jsonb_object_agg(DISTINCT genre.id, genre.name) AS genre
 
             FROM film_work as fw
             LEFT OUTER JOIN genre_film_work

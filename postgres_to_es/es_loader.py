@@ -54,7 +54,17 @@ MOVIES_IDX = {
         "type": "float"
       },
       "genre": {
-        "type": "keyword"
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "text",
+            "analyzer": "ru_en"
+          }
+        }
       },
       "title": {
         "type": "text",
@@ -69,9 +79,18 @@ MOVIES_IDX = {
         "type": "text",
         "analyzer": "ru_en"
       },
-      "director": {
-        "type": "text",
-        "analyzer": "ru_en"
+      "directors": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "text",
+            "analyzer": "ru_en"
+          }
+        }
       },
       "actors_names": {
         "type": "text",
@@ -110,19 +129,6 @@ MOVIES_IDX = {
     }
   }
 }
-GENRES_IDX = {
-  "mappings": {
-    "dynamic": "strict",
-    "properties": {
-      "id": {
-        "type": "keyword"
-      },
-      "name": {
-        "type": "keyword"
-      }
-    }
-  }
-}
 PERSONS_IDX = {
   "mappings": {
     "dynamic": "strict",
@@ -131,7 +137,13 @@ PERSONS_IDX = {
         "type": "keyword"
       },
       "name": {
-        "type": "keyword"
+        "type": "text",
+        "analyzer": "ru_en",
+        "fields": {
+          "raw": {
+            "type":  "keyword"
+          }
+        }
       }
     }
   }
@@ -140,7 +152,7 @@ PERSONS_IDX = {
 idx_map = {
   'movies': MOVIES_IDX | SETTINGS,
   'persons': PERSONS_IDX | SETTINGS,
-  'genres': GENRES_IDX | SETTINGS,
+  'genres': PERSONS_IDX | SETTINGS,
 }
 
 
