@@ -34,14 +34,14 @@ def loop(pg: PostgresMovies, es: ElasticsearchMovies):
     while True:
         try:
             etl(es, es_indexes, state)
+            logger.debug('Wait next updates %d sec', sync_interval)
+            sleep(sync_interval)
         except KeyboardInterrupt:
             logger.error('Interrupted')
             break
         except Exception as err:
             logger.error('%s', err)
-        finally:
-            logger.debug('Wait next updates %d sec', sync_interval)
-            sleep(sync_interval)
+            break
 
 
 def etl(
