@@ -1,15 +1,15 @@
-import uuid
+from uuid import UUID
 from pydantic import BaseModel, Field, validator, BaseSettings
 
 
 class NameMixin(BaseModel):
-    id: uuid.UUID
+    uuid: UUID = Field(alias='id')
     name: str
 
 
 class Movie(BaseModel):
     """https://pydantic-docs.helpmanual.io/usage/schema/#field-customization"""
-    id: uuid.UUID
+    uuid: UUID = Field(alias='id')
     imdb_rating: float = Field(alias='rating', ge=0, le=10)
     title: str
     description: str

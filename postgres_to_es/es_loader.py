@@ -47,7 +47,7 @@ MOVIES_IDX = {
   "mappings": {
     "dynamic": "strict",
     "properties": {
-      "id": {
+      "uuid": {
         "type": "keyword"
       },
       "imdb_rating": {
@@ -133,7 +133,7 @@ PERSONS_IDX = {
   "mappings": {
     "dynamic": "strict",
     "properties": {
-      "id": {
+      "uuid": {
         "type": "keyword"
       },
       "name": {
