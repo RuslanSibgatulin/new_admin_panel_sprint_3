@@ -2,6 +2,7 @@ import os
 import logging.config
 from time import sleep
 from datetime import datetime
+from typing import Any, Dict, List
 from uuid import uuid4
 from dotenv import load_dotenv
 from elasticsearch7 import Elasticsearch
@@ -74,8 +75,18 @@ def etl(
     state.set_state('etl_state', start.isoformat())
 
 
-def transform(index_name, _class, pg_data):
-    """Преобразование Postgres данных в формат для записи Elasticsearch."""
+def transform(index_name: str, _class: Any, pg_data: List[Dict]) -> List[Dict]:
+    """Преобразование Postgres данных в формат для записи Elasticsearch.
+
+    Args:
+        index_name (str): movies, persons, genres ...
+        _class (Any): pydantic model - converter
+        pg_data (List[Dict]): postgres data
+
+    Returns:
+        List[Dict]: data for ES bulk
+    """
+
     es_data = []
     for i in pg_data:
         obj = _class.parse_obj(i)
