@@ -2,10 +2,11 @@ import os
 import logging.config
 from time import sleep
 from datetime import datetime
+from uuid import uuid4
 from dotenv import load_dotenv
 from elasticsearch7 import Elasticsearch
 
-from models import Postgres_dsn, Movie, NameMixin
+from models import Postgres_dsn, Movie, Genre, Person
 from json_storage import JsonFileStorage, State
 from es_loader import ElasticsearchMovies
 from pg_movies import PostgresMovies
@@ -22,11 +23,11 @@ def loop(pg: PostgresMovies, es: ElasticsearchMovies):
         },
         'genres': {
             'getter': pg.modified_genres,
-            'coverter': NameMixin,
+            'coverter': Genre,
         },
         'persons': {
-            'getter': pg.modified_persons,
-            'coverter': NameMixin
+            'getter': pg.modified_persons_by_role,
+            'coverter': Person
         }
     }
 
@@ -39,9 +40,9 @@ def loop(pg: PostgresMovies, es: ElasticsearchMovies):
         except KeyboardInterrupt:
             logger.error('Interrupted')
             break
-        except Exception as err:
-            logger.error('%s', err)
-            break
+        # except Exception as err:
+        #     logger.error('%s', err)
+        #     break
 
 
 def etl(
@@ -75,14 +76,17 @@ def etl(
 
 def transform(index_name, _class, pg_data):
     """Преобразование Postgres данных в формат для записи Elasticsearch."""
-    es_data = [
+    es_data = []
+    for i in pg_data:
+        obj = _class.parse_obj(i)
+        _id = obj.doc_id if hasattr(obj, 'doc_id') else i['id']
+        es_data.append(
             {
                 '_index': index_name,
-                '_id': i['id'],
-                '_source': _class.parse_obj(i).dict(),
+                '_id': _id,
+                '_source': obj.dict(exclude={'doc_id'}),
             }
-            for i in pg_data
-        ]
+        )
 
     return es_data
 

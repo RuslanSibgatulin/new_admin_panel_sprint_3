@@ -129,7 +129,7 @@ MOVIES_IDX = {
     }
   }
 }
-PERSONS_IDX = {
+GENRES_IDX = {
   "mappings": {
     "dynamic": "strict",
     "properties": {
@@ -148,11 +148,43 @@ PERSONS_IDX = {
     }
   }
 }
+PERSONS_IDX = {
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "uuid": {
+        "type": "keyword"
+      },
+      "full_name": {
+        "type": "text",
+        "analyzer": "ru_en",
+        "fields": {
+          "raw": {
+            "type":  "keyword"
+          }
+        }
+      },
+      "role": {
+        "type": "text",
+        "analyzer": "ru_en",
+        "fields": {
+          "raw": {
+            "type":  "keyword"
+          }
+        }
+      },
+      "film_ids": {
+        "type": "keyword"
+      },
+    }
+  }
+}
+
 
 idx_map = {
   'movies': MOVIES_IDX | SETTINGS,
   'persons': PERSONS_IDX | SETTINGS,
-  'genres': PERSONS_IDX | SETTINGS,
+  'genres': GENRES_IDX | SETTINGS,
 }
 
 

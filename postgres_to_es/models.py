@@ -1,15 +1,35 @@
-from uuid import UUID
+from typing import Optional
+from uuid import UUID, uuid3
 from pydantic import BaseModel, Field, validator, BaseSettings
 
 
-class NameMixin(BaseModel):
+class UUIDMixin(BaseModel):
     uuid: UUID = Field(alias='id')
+
+
+class Genre(UUIDMixin):
     name: str
 
 
-class Movie(BaseModel):
+class Person(UUIDMixin):
+    full_name: str
+    role: str
+    film_ids: list[UUID]
+    doc_id: Optional[UUID]
+
+    @validator('doc_id', always=True)
+    def fill_doc_id(cls, value, values):
+        id, role = values["uuid"], values["role"]
+        return uuid3(id, role)
+
+    @validator('film_ids', pre=True)
+    def film_ids_must_be_list_of_uuid(cls, v):
+        if isinstance(v, str):
+            return v[1:-1].split(',')
+
+
+class Movie(UUIDMixin):
     """https://pydantic-docs.helpmanual.io/usage/schema/#field-customization"""
-    uuid: UUID = Field(alias='id')
     imdb_rating: float = Field(alias='rating', ge=0, le=10)
     title: str
     description: str
@@ -31,10 +51,6 @@ class Movie(BaseModel):
     @validator('imdb_rating', pre=True)
     def set_rating(cls, value):
         return value or 0
-
-    # @validator('genre', pre=True)
-    # def set_genre(cls, value):
-    #     return value or ['N/A']
 
     @validator('actors_names', 'writers_names', pre=True)
     def names_must_be_list(cls, value):

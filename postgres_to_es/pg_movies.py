@@ -98,3 +98,17 @@ class PostgresMovies:
             WHERE genre.modified > '{0}'
         """.format(since)
         yield from cls.get_limited_data(query)
+
+    def modified_persons_by_role(cls, since: datetime):
+        query = """
+            SELECT
+            pfw.person_id id,
+            person.full_name, pfw.role,
+            array_agg(pfw.film_work_id) AS film_ids
+            FROM person_film_work pfw
+            JOIN film_work fw ON fw.id = pfw.film_work_id
+            JOIN person ON person.id = pfw.person_id
+            WHERE person.modified > '{0}'
+            GROUP BY pfw.person_id, person.full_name, pfw.role
+        """.format(since)
+        yield from cls.get_limited_data(query)
