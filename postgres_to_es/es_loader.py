@@ -53,11 +53,14 @@ MOVIES_IDX = {
       "imdb_rating": {
         "type": "float"
       },
+      "creation_date": {
+        "type": "date"
+      },
       "genre": {
         "type": "nested",
         "dynamic": "strict",
         "properties": {
-          "id": {
+          "uuid": {
             "type": "keyword"
           },
           "name": {
@@ -83,10 +86,10 @@ MOVIES_IDX = {
         "type": "nested",
         "dynamic": "strict",
         "properties": {
-          "id": {
+          "uuid": {
             "type": "keyword"
           },
-          "name": {
+          "full_name": {
             "type": "text",
             "analyzer": "ru_en"
           }
@@ -104,10 +107,10 @@ MOVIES_IDX = {
         "type": "nested",
         "dynamic": "strict",
         "properties": {
-          "id": {
+          "uuid": {
             "type": "keyword"
           },
-          "name": {
+          "full_name": {
             "type": "text",
             "analyzer": "ru_en"
           }
@@ -117,10 +120,10 @@ MOVIES_IDX = {
         "type": "nested",
         "dynamic": "strict",
         "properties": {
-          "id": {
+          "uuid": {
             "type": "keyword"
           },
-          "name": {
+          "full_name": {
             "type": "text",
             "analyzer": "ru_en"
           }

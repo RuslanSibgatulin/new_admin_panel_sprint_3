@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from uuid import UUID, uuid3
 from pydantic import BaseModel, Field, validator, BaseSettings
@@ -33,6 +34,7 @@ class Movie(UUIDMixin):
     imdb_rating: float = Field(alias='rating', ge=0, le=10)
     title: str
     description: str
+    creation_date: Optional[date]
     genre: list[dict]  # dict
     directors: list[dict]  # dict
     actors: list[dict]
@@ -56,12 +58,20 @@ class Movie(UUIDMixin):
     def names_must_be_list(cls, value):
         return value or []
 
-    @validator('actors', 'writers', 'directors', 'genre', pre=True)
+    @validator('genre', pre=True)
+    def genres_must_be_list_of_dict(cls, v):
+        genres = []
+        if isinstance(v, dict):
+            genres = list(map(
+                lambda x: {'uuid': x, 'name': v[x]}, v))
+        return genres
+
+    @validator('actors', 'writers', 'directors', pre=True)
     def persons_must_be_list_of_dict(cls, v):
-        pers = [{}]
+        pers = []
         if isinstance(v, dict):
             pers = list(map(
-                lambda x: {'id': x, 'name': v[x]}, v))
+                lambda x: {'uuid': x, 'full_name': v[x]}, v))
         return pers
 
 

@@ -38,7 +38,7 @@ class PostgresMovies:
     def modified_movies(cls, since: datetime):
         query = """
             SELECT
-            fw.id, fw.title, fw.description, fw.rating,
+            fw.id, fw.title, fw.description, fw.rating, fw.creation_date,
 
             jsonb_object_agg(DISTINCT person.id, person.full_name )
                 FILTER (WHERE person_film_work.role = 'actor') AS actors,
